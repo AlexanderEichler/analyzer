@@ -218,6 +218,12 @@ struct
     | "indented" -> failwith " `indented` is no longer supported for `result`, use fast_xml instead "
     | "compact" -> failwith " `compact` is no longer supported for `result`, use fast_xml instead "
     | "html" -> failwith " `html` is no longer supported for `result`, run with --html instead "
+    | "sarif" -> 
+      let open BatPrintf in
+      let module SH = BatHashtbl.Make (Basetype.RawStrings) in
+      let file2funs = SH.create 100 in
+      let funs2node = SH.create 100 in
+      failwith "failwith in analyses.ml "
     | "fast_xml" ->
       let module SH = BatHashtbl.Make (Basetype.RawStrings) in
       let file2funs = SH.create 100 in

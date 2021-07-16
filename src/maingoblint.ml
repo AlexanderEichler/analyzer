@@ -81,6 +81,16 @@ let option_spec_list =
     set_bool "g2html" true;
     set_string "result" "fast_xml"
   in
+  let configure_sarif () =
+    if (get_string "outfile" = "") then
+      set_string "outfile" "test.json";
+    if get_string "exp.g2html_path" = "" then
+      set_string "exp.g2html_path" exe_dir;
+    set_bool "dbg.print_dead_code" true;
+    set_bool "exp.cfgdot" true;
+    set_bool "g2html" false;
+    set_string "result" "json"
+  in
   let tmp_arg = ref "" in
   [ "-o"                   , Arg.String (set_string "outfile"), ""
   ; "-v"                   , Arg.Unit (fun () -> set_bool "dbg.verbose" true; set_bool "printstats" true), ""
@@ -100,6 +110,7 @@ let option_spec_list =
   ; "--tracelocs"          , add_int Tracing.tracelocs, ""
   ; "--help"               , Arg.Unit (fun _ -> print_help stdout),""
   ; "--html"               , Arg.Unit (fun _ -> configure_html ()),""
+  ; "--sarif"               , Arg.Unit (fun _ -> configure_sarif ()),""
   ; "--compare_runs"       , Arg.Tuple [Arg.Set_string tmp_arg; Arg.String (fun x -> set_auto "compare_runs" (sprintf "['%s','%s']" !tmp_arg x))], ""
   ; "--oil"                , Arg.String oil, ""
   (*     ; "--tramp"              , Arg.String (set_string "ana.osek.tramp"), ""  *)

@@ -12,6 +12,7 @@ let soundness = ref true
 let warn_out = ref stdout
 let tracing = Config.tracing
 let xml_file_name = ref ""
+let sarif_file_name = ref ""
 
 let push_warning w =
   if get_string "result" = "fast_xml" || get_bool "gobview" then
