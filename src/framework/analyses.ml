@@ -210,6 +210,10 @@ struct
         BatPrintf.fprintf f "<group name=\"%s\">%a</group>\n" n (BatList.print ~first:"" ~last:"" ~sep:"" one_text) e
     in
     List.iter (one_w f) !Messages.warning_table
+  
+ 
+ 
+
 
   let output table gtable gtfxml (file: file) =
     let out = Messages.get_out result_name !GU.out in
@@ -288,24 +292,35 @@ struct
         | MyCFG.Function g      -> fprintf f "\"ret%d\"" g.svar.vid
         | MyCFG.FunctionEntry g -> fprintf f "\"fun%d\"" g.svar.vid
       in
+      let printSarifLogObject f =  
+        fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
+        fprintf f "\"version\": \"%s\",\n  " "2.1.0";
+      in 
+     (*BatPrintf.sprintf "\"version\": \"%s\",\n  " "2.1.0"*)
       let p_fun f x = fprintf f "{\n  \"name\": \"%s\",\n  \"nodes\": %a\n}" x (p_list p_node) (SH.find_all funs2node x) in
       (*let p_fun f x = p_obj f [ "name", BatString.print, x; "nodes", p_list p_node, SH.find_all funs2node x ] in*)
       let p_file f x = fprintf f "{\n  \"name\": \"%s\",\n  \"path\": \"%s\",\n  \"functions\": %a\n}" (Filename.basename x) x (p_list p_fun) (SH.find_all file2funs x) in
       let write_file f fn =
         printf "Writing sarif to temp. file: %s\n%!" fn;
-        fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
-        fprintf f "\"version\": \"%s\",\n  " "2.1.0";
+        printSarifLogObject f;
         fprintf f "\"runs\": [\n  ";
         fprintf f "{\n  ";
-        fprintf f "\"tool\": {\n " ;
-        fprintf f "\"driver\": {\n  ";
-        fprintf f "\"name\": \"%s\",\n  " "TODO";
-        fprintf f "\"fullName\": \"%s\"\n  " "TODO";
+        fprintf f "\"tool\": {\n    ";
+        fprintf f "\ \"driver\": {\n       ";
+        fprintf f "\"name\": \"%s\",\n       " "goblint";
+        fprintf f "\"fullName\": \"%s\",\n       " "goblint static analyser";        
+        fprintf f "\"downloadUri\": \"%s\"\n    " "https://github.com/goblint/analyzer";
         fprintf f "}\n  ";  
         fprintf f "},\n  ";
-        fprintf f "\"results\": []\n"   ;
+        fprintf f "\ \"invocations\": [\n       ";
+        fprintf f "{\n";        
+        fprintf f "        \"commandLine\": \"%a\",\n" (BatArray.print ~first:"" ~last:"" ~sep:" " BatString.print) BatSys.argv;
+        fprintf f "        \"executionSuccessful\": %B\n    " true;        
+        fprintf f "   }\n  ";  
+        fprintf f "],\n" ;
+        fprintf f "\"results\": []\n  ";
         fprintf f "}\n  " ;
-        fprintf f "]\n  " ;
+        fprintf f "]\n" ;
         (*fprintf f "\"files\": %a,\n  " (p_enum p_file) (SH.keys file2funs);
         fprintf f "\"results\": [\n  %a\n]\n" printJson (Lazy.force table);
         *)
