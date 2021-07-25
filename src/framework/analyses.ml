@@ -217,13 +217,7 @@ struct
     | "pretty" -> ignore (fprintf out "%a\n" pretty (Lazy.force table))
     | "indented" -> failwith " `indented` is no longer supported for `result`, use fast_xml instead "
     | "compact" -> failwith " `compact` is no longer supported for `result`, use fast_xml instead "
-    | "html" -> failwith " `html` is no longer supported for `result`, run with --html instead "
-    | "sarif" -> 
-      let open BatPrintf in
-      let module SH = BatHashtbl.Make (Basetype.RawStrings) in
-      let file2funs = SH.create 100 in
-      let funs2node = SH.create 100 in
-      failwith "failwith in analyses.ml "
+    | "html" -> failwith " `html` is no longer supported for `result`, run with --html instead "   
     | "fast_xml" ->
       let module SH = BatHashtbl.Make (Basetype.RawStrings) in
       let file2funs = SH.create 100 in
@@ -275,6 +269,52 @@ struct
       else
         let f = BatIO.output_channel out in
         write_file f (get_string "outfile")
+    | "sarif" -> 
+      let open BatPrintf in
+      let module SH = BatHashtbl.Make (Basetype.RawStrings) in
+      let file2funs = SH.create 100 in
+      let funs2node = SH.create 100 in
+      iter (fun (_,n,_) _ -> SH.add funs2node (MyCFG.getFun n).svar.vname n) (Lazy.force table);
+      iterGlobals file (function
+          | GFun (fd,loc) -> SH.add file2funs loc.file fd.svar.vname
+          | _ -> ()
+        );
+      let p_enum p f xs = BatEnum.print ~first:"[\n  " ~last:"\n]" ~sep:",\n  " p f xs in
+      let p_list p f xs = BatList.print ~first:"[\n  " ~last:"\n]" ~sep:",\n  " p f xs in
+      (*let p_kv f (k,p,v) = fprintf f "\"%s\": %a" k p v in*)
+      (*let p_obj f xs = BatList.print ~first:"{\n  " ~last:"\n}" ~sep:",\n  " p_kv xs in*)
+      let p_node f = function
+        | MyCFG.Statement stmt  -> fprintf f "\"%d\"" stmt.sid
+        | MyCFG.Function g      -> fprintf f "\"ret%d\"" g.svar.vid
+        | MyCFG.FunctionEntry g -> fprintf f "\"fun%d\"" g.svar.vid
+      in
+      let p_fun f x = fprintf f "{\n  \"name\": \"%s\",\n  \"nodes\": %a\n}" x (p_list p_node) (SH.find_all funs2node x) in
+      (*let p_fun f x = p_obj f [ "name", BatString.print, x; "nodes", p_list p_node, SH.find_all funs2node x ] in*)
+      let p_file f x = fprintf f "{\n  \"name\": \"%s\",\n  \"path\": \"%s\",\n  \"functions\": %a\n}" (Filename.basename x) x (p_list p_fun) (SH.find_all file2funs x) in
+      let write_file f fn =
+        printf "Writing sarif to temp. file: %s\n%!" fn;
+        fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
+        fprintf f "\"version\": \"%s\",\n  " "2.1.0";
+        fprintf f "\"runs\": [\n  ";
+        fprintf f "{\n  ";
+        fprintf f "\"tool\": {\n " ;
+        fprintf f "\"driver\": {\n  ";
+        fprintf f "\"name\": \"%s\",\n  " "TODO";
+        fprintf f "\"fullName\": \"%s\"\n  " "TODO";
+        fprintf f "}\n  ";  
+        fprintf f "},\n  ";
+        fprintf f "\"results\": []\n"   ;
+        fprintf f "}\n  " ;
+        fprintf f "]\n  " ;
+        (*fprintf f "\"files\": %a,\n  " (p_enum p_file) (SH.keys file2funs);
+        fprintf f "\"results\": [\n  %a\n]\n" printJson (Lazy.force table);
+        *)
+        (*gtfxml f gtable;*)
+        (*printXmlWarning f ();*)
+        fprintf f "}\n";
+      in
+      let f = BatIO.output_channel out in
+      write_file f (get_string "outfile")
     | "json" ->
       let open BatPrintf in
       let module SH = BatHashtbl.Make (Basetype.RawStrings) in
