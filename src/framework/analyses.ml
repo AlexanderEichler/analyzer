@@ -176,7 +176,18 @@ struct
       BatPrintf.fprintf f "%a</call>\n" Range.printXml v
     in
     iter print_one xs
-
+    
+  let printSarifResults f xs =
+      let print_id f = function
+        | MyCFG.Statement stmt  -> BatPrintf.fprintf f "%d" stmt.sid
+        | MyCFG.Function g      -> BatPrintf.fprintf f "ret%d" g.svar.vid
+        | MyCFG.FunctionEntry g -> BatPrintf.fprintf f "fun%d" g.svar.vid
+      in
+      let print_one (loc,n,fd) v =
+        BatPrintf.fprintf f "    {\n\"ruleId\": \"%a\", \"file\": \"%s\", \"line\": \"%d\", \"byte\": \"%d\", \"states\": %s\n},\n" print_id n loc.file loc.line loc.byte (Yojson.Safe.to_string (Range.to_yojson v))
+      in
+      iter print_one xs
+      
   let printJson f xs =
     let print_id f = function
       | MyCFG.Statement stmt  -> BatPrintf.fprintf f "%d" stmt.sid
@@ -311,14 +322,17 @@ struct
         fprintf f "\"fullName\": \"%s\",\n       " "goblint static analyser";        
         fprintf f "\"downloadUri\": \"%s\"\n    " "https://github.com/goblint/analyzer";
         fprintf f "}\n  ";  
-        fprintf f "},\n  ";
-        fprintf f "\ \"invocations\": [\n       ";
+        fprintf f "},\n";
+        fprintf f "\   \"invocations\": [\n       ";
         fprintf f "{\n";        
         fprintf f "        \"commandLine\": \"%a\",\n" (BatArray.print ~first:"" ~last:"" ~sep:" " BatString.print) BatSys.argv;
         fprintf f "        \"executionSuccessful\": %B\n    " true;        
         fprintf f "   }\n  ";  
         fprintf f "],\n" ;
-        fprintf f "\"results\": []\n  ";
+        fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
+        fprintf f "   \"results\": [\n";
+        fprintf f "\"results\": [\n  %a\n]\n" printSarifResults (Lazy.force table);
+        fprintf f "]\n" ;
         fprintf f "}\n  " ;
         fprintf f "]\n" ;
         (*fprintf f "\"files\": %a,\n  " (p_enum p_file) (SH.keys file2funs);
