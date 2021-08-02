@@ -173,20 +173,29 @@ struct
     in
     let print_one (loc,n,fd) v =
       BatPrintf.fprintf f "<call id=\"%a\" file=\"%s\" line=\"%d\" order=\"%d\">\n" print_id n loc.file loc.line loc.byte;
-      BatPrintf.fprintf f "%a</call>\n" Range.printXml v
+      BatPrintf.fprintf f "%a</call>\n" Range.printXml v 
     in
     iter print_one xs
     
   let printSarifResults f xs =
       let print_id f = function
-        | MyCFG.Statement stmt  -> BatPrintf.fprintf f "%d" stmt.sid
-        | MyCFG.Function g      -> BatPrintf.fprintf f "ret%d" g.svar.vid
-        | MyCFG.FunctionEntry g -> BatPrintf.fprintf f "fun%d" g.svar.vid
+        | MyCFG.Statement stmt  -> BatPrintf.fprintf f " %d" stmt.sid
+        | MyCFG.Function g      -> BatPrintf.fprintf f " %d" g.svar.vid
+        | MyCFG.FunctionEntry g -> BatPrintf.fprintf f " %d" g.svar.vid
       in
-      let print_one (loc,n,fd) v =
-        BatPrintf.fprintf f "    {\n\"ruleId\": \"%a\", \"file\": \"%s\", \"line\": \"%d\", \"byte\": \"%d\", \"states\": %s\n},\n" print_id n loc.file loc.line loc.byte (Yojson.Safe.to_string (Range.to_yojson v))
-      in
-      iter print_one xs
+      let print_one_entry (loc,n,fd) v =        
+        BatPrintf.fprintf f "    {\n        \"ruleId\": \"%a\"," print_id n;
+        BatPrintf.fprintf f "\n        \"level\": \"%s\"," "none" ;
+        BatPrintf.fprintf f "\n        \"message\": {\n            \"text\": \"%s\"\n         }," "TODO message text" ;
+        BatPrintf.fprintf f "\n        \"locations\": [\n        {\n    " ;
+        BatPrintf.fprintf f "       \"physicalLocation\": " ;
+        BatPrintf.fprintf f "{\n              \"region\": {\n                \"startLine\":%d\n               }\n      " loc.line ;
+        BatPrintf.fprintf f "      }\n        }\n        ]";
+        BatPrintf.fprintf f "\n  },\n   ";
+        (*BatPrintf.fprintf f "\n        \"file\": \"%s\"," loc.file ;
+        BatPrintf.fprintf f "\n        \"byte\": \"%d\", \"states\": %s\n    },\n"  loc.byte (Yojson.Safe.to_string (Range.to_yojson v))*)
+      in 
+      iter print_one_entry xs
       
   let printJson f xs =
     let print_id f = function
@@ -304,10 +313,10 @@ struct
         | MyCFG.FunctionEntry g -> fprintf f "\"fun%d\"" g.svar.vid
       in
       let printSarifLogObject f =  
+        (*let print version f (loc,n,fd)::xs= fprintf f "\"version\": \"%s\",\n  " "2.1.0"  in*)
         fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
         fprintf f "\"version\": \"%s\",\n  " "2.1.0";
       in 
-     (*BatPrintf.sprintf "\"version\": \"%s\",\n  " "2.1.0"*)
       let p_fun f x = fprintf f "{\n  \"name\": \"%s\",\n  \"nodes\": %a\n}" x (p_list p_node) (SH.find_all funs2node x) in
       (*let p_fun f x = p_obj f [ "name", BatString.print, x; "nodes", p_list p_node, SH.find_all funs2node x ] in*)
       let p_file f x = fprintf f "{\n  \"name\": \"%s\",\n  \"path\": \"%s\",\n  \"functions\": %a\n}" (Filename.basename x) x (p_list p_fun) (SH.find_all file2funs x) in
@@ -327,19 +336,13 @@ struct
         fprintf f "{\n";        
         fprintf f "        \"commandLine\": \"%a\",\n" (BatArray.print ~first:"" ~last:"" ~sep:" " BatString.print) BatSys.argv;
         fprintf f "        \"executionSuccessful\": %B\n    " true;        
-        fprintf f "   }\n  ";  
-        fprintf f "],\n" ;
+        fprintf f "   }\n";  
+        fprintf f "   ],\n" ;
         fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
-        fprintf f "   \"results\": [\n";
-        fprintf f "\"results\": [\n  %a\n]\n" printSarifResults (Lazy.force table);
+        fprintf f "   \"results\": [\n%a" printSarifResults (Lazy.force table);
         fprintf f "]\n" ;
         fprintf f "}\n  " ;
-        fprintf f "]\n" ;
-        (*fprintf f "\"files\": %a,\n  " (p_enum p_file) (SH.keys file2funs);
-        fprintf f "\"results\": [\n  %a\n]\n" printJson (Lazy.force table);
-        *)
-        (*gtfxml f gtable;*)
-        (*printXmlWarning f ();*)
+        fprintf f "]\n" ;       
         fprintf f "}\n";
       in
       let f = BatIO.output_channel out in
