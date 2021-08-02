@@ -189,9 +189,11 @@ struct
         BatPrintf.fprintf f "\n        \"message\": {\n            \"text\": \"%s\"\n         }," "TODO message text" ;
         BatPrintf.fprintf f "\n        \"locations\": [\n        {\n    " ;
         BatPrintf.fprintf f "       \"physicalLocation\": " ;
-        BatPrintf.fprintf f "{\n              \"region\": {\n                \"startLine\":%d\n               }\n      " loc.line ;
-        BatPrintf.fprintf f "      }\n        }\n        ]";
-        BatPrintf.fprintf f "\n  },\n   ";
+        BatPrintf.fprintf f "{\n              \"artifactLocation\": {\n                \"uri\":\"%s\"\n               },\n      " "dummyURI" ;
+        BatPrintf.fprintf f "              \"region\": {\n                \"startLine\":%d\n               }\n      " loc.line ;
+        BatPrintf.fprintf f "       }\n";
+        BatPrintf.fprintf f "       }\n       ]";
+        BatPrintf.fprintf f "\n    },\n";
         (*BatPrintf.fprintf f "\n        \"file\": \"%s\"," loc.file ;
         BatPrintf.fprintf f "\n        \"byte\": \"%d\", \"states\": %s\n    },\n"  loc.byte (Yojson.Safe.to_string (Range.to_yojson v))*)
       in 
