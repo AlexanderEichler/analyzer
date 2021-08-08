@@ -177,14 +177,25 @@ struct
     in
     iter print_one xs
     
-  let printSarifResults f xs =
+  let printSarifResults f (xs:value M.t) =
       let print_id f = function
         | MyCFG.Statement stmt  -> BatPrintf.fprintf f " %d" stmt.sid
         | MyCFG.Function g      -> BatPrintf.fprintf f " %d" g.svar.vid
         | MyCFG.FunctionEntry g -> BatPrintf.fprintf f " %d" g.svar.vid
-      in      
-         
-      let print_one_entry (loc,n,fd) v =        
+      in    
+      let print_warning  (w:[ `group of string * (string * location) list | `text of string * location])=
+         match w with 
+          `text (s,loc) ->  BatPrintf.fprintf f "\n        \"string\": \"%s\"," s;
+(*)
+
+          `group (s,x:xs) ->  BatPrintf.fprintf f "\n        \"string case2\": \"%s\"," s;
+
+          `group ( (s:string),_[] ) ->  BatPrintf.fprintf f "\n        \"string case3\": \"%s\"," s;
+
+          _ -> BatPrintf.fprintf f "\n        \"string case4\": \"%s\"," s;
+          *)
+       in   
+      let print_one_entry (loc,n,fd) (v:value)=        
         BatPrintf.fprintf f "    {\n        \"ruleId\": \"%a\"," print_id n;
         BatPrintf.fprintf f "\n        \"level\": \"%s\"," "none" ;
         BatPrintf.fprintf f "\n        \"message\": {\n            \"text\": \"%s\"\n         }," "TODO message text" ;
@@ -195,13 +206,14 @@ struct
         BatPrintf.fprintf f "       }\n";
         BatPrintf.fprintf f "       }\n       ]";
         BatPrintf.fprintf f "\n    },\n";
-
         (*  (BatArray.print ~first:"" ~last:"" ~sep:" " BatString.print) BatSys.argv
         BatPrintf.fprintf f "\n        \"states\": %s\n    },\n"  (Yojson.Safe.to_string (Range.to_yojson v));    
         BatPrintf.fprintf f "\n        \"file\": \"%s\"," loc.file ;
         BatPrintf.fprintf f "\n        \"byte\": \"%d\", \"states\": %s\n    },\n"  loc.byte (Yojson.Safe.to_string (Range.to_yojson v))*)
-      in 
-      iter print_one_entry xs
+      in      
+      List.iter print_warning !Messages.warning_table
+     
+   
       
   let printJson f xs =
     let print_id f = function
@@ -345,11 +357,12 @@ struct
         fprintf f "   }\n";  
         fprintf f "   ],\n" ;
         fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
-        fprintf f "   \"results\": [\n%a" printSarifResults (Lazy.force table);
+        fprintf f "   \"results\": [\n%a" printSarifResults (Lazy.force table) ;
         fprintf f "]\n" ;
         fprintf f "}\n  " ;
         fprintf f "]\n" ;       
-        fprintf f "}\n";
+        fprintf f "}\n";       
+        
       in
       let f = BatIO.output_channel out in
       write_file f (get_string "outfile")
