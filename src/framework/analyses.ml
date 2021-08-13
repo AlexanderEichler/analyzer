@@ -183,9 +183,13 @@ struct
         | MyCFG.Function g      -> BatPrintf.fprintf f " %d" g.svar.vid
         | MyCFG.FunctionEntry g -> BatPrintf.fprintf f " %d" g.svar.vid
       in    
-      let print_warning  (w:[ `group of string * (string * location) list | `text of string * location])=
-         match w with 
+      let print_warning  warning=
+         match     warning with 
           `text (s,loc) ->  BatPrintf.fprintf f "\n        \"string\": \"%s\"," s;
+
+          |`group ((s:string),x::t) -> BatPrintf.fprintf f "\n        \"string case2\": \"%s\"," s;
+
+          |`group ( (s:string),__ ) ->  BatPrintf.fprintf f "\n        \"string case3\": \"%s\"," s;
 (*)
 
           `group (s,x:xs) ->  BatPrintf.fprintf f "\n        \"string case2\": \"%s\"," s;
