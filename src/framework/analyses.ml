@@ -190,7 +190,7 @@ struct
           |`group ((s:string),x::t) -> BatPrintf.fprintf f "\n        \"string case2\": \"%s\"," s;
 
           |`group ( (s:string),__ ) ->  BatPrintf.fprintf f "\n        \"string case3\": \"%s\"," s;
-(*)
+(*
 
           `group (s,x:xs) ->  BatPrintf.fprintf f "\n        \"string case2\": \"%s\"," s;
 
@@ -215,7 +215,10 @@ struct
         BatPrintf.fprintf f "\n        \"file\": \"%s\"," loc.file ;
         BatPrintf.fprintf f "\n        \"byte\": \"%d\", \"states\": %s\n    },\n"  loc.byte (Yojson.Safe.to_string (Range.to_yojson v))*)
       in      
-      List.iter print_warning !Messages.warning_table
+      BatPrintf.fprintf f "\"message table length:%d\n" (List.length !Messages.warning_table) ;
+       
+      List.iter print_warning !Messages.warning_table;
+      iter print_one_entry xs
      
    
       
@@ -240,6 +243,7 @@ struct
         BatPrintf.fprintf f "<group name=\"%s\">%a</group>\n" n (BatList.print ~first:"" ~last:"" ~sep:"" one_text) e
     in
     let one_w f x = BatPrintf.fprintf f "\n<warning>%a</warning>" one_w x in
+    BatPrintf.fprintf f "\"message table length:%d\n" (List.length !Messages.warning_table) ;
     List.iter (one_w f) !Messages.warning_table
 
   let printXmlGlobals f () =
@@ -305,7 +309,7 @@ struct
         BatPrintf.fprintf f "<result>\n";
         BatEnum.iter (fun b -> BatPrintf.fprintf f "<file name=\"%s\" path=\"%s\">\n%a</file>\n" (Filename.basename b) b p_funs (SH.find_all file2funs b)) (BatEnum.uniq @@ SH.keys file2funs);
         BatPrintf.fprintf f "%a" printXml (Lazy.force table);
-        gtfxml f gtable;
+        gtfxml f gtable;        
         printXmlWarning f ();
         BatPrintf.fprintf f "</result></run>\n";
         BatPrintf.fprintf f "%!"
@@ -399,7 +403,7 @@ struct
         fprintf f "\"results\": [\n  %a\n]\n" printJson (Lazy.force table);
         (*gtfxml f gtable;*)
         (*printXmlWarning f ();*)
-        fprintf f "}\n";
+        fprintf f "}\n";  
       in
       if get_bool "g2html" then
         BatFile.with_temporary_out ~mode:[`create;`text;`delete_on_exit] write_file

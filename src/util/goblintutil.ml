@@ -19,7 +19,7 @@ let has_otherfuns = ref false
 
 (** If this is true we output messages and collect accesses.
     This is set to true in control.ml before we verify the result (or already before solving if warn = 'early') *)
-let should_warn = ref false
+let should_warn = ref true
 
 let did_overflow = ref false
 

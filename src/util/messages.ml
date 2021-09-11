@@ -15,7 +15,7 @@ let xml_file_name = ref ""
 let sarif_file_name = ref ""
 
 let push_warning w =
-  if get_string "result" = "sarif" ||get_string "result" = "fast_xml" || get_bool "gobview" then
+  (*if get_string "result" = "sarif" ||get_string "result" = "fast_xml" || get_bool "gobview" then*)
     warning_table := w :: !warning_table
 
 let track m =
