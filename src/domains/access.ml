@@ -593,7 +593,7 @@ let print_accesses_xml () =
       LSSet.iter (BatPrintf.printf "      <prot %a />\n" d_lp) lp;
       print_endline "    </protectors>";
       print_endline "  </access>"
-    in
+    in  
     Set.iter h acs
   in
   let h ty lv ht =
@@ -617,8 +617,10 @@ let print_accesses_xml () =
   TypeHash.iter f accs;
   print_endline "</warnings>"
 
-let print_result () =
-  if !some_accesses then
+let print_result () =   
+    ignore(printf "stuff\n");
+    ignore(printf "print_result ()\n");
+     ignore(printf "warnstyle %s\n",get_string "warnstyle");
     match get_string "warnstyle" with
     | "legacy" -> print_races_oldscool ()
     | "xml" -> print_accesses_xml ()
