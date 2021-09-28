@@ -1,0 +1,107 @@
+{
+ "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+  {
+  "tool": {
+     "driver": {
+       "name": "goblint",
+       "fullName": "goblint static analyser",
+       "informationUri": "https://github.com/goblint/analyzer",
+       "version": "1",
+       "downloadUri": "https://github.com/goblint/analyzer",
+        "rules": [
+        {
+           "id": "1",
+           "helpUri": "https://github.com/goblint/analyzer",
+           "help": {
+               "text": "helptext"
+           },
+          "shortDescription": {
+               "text": "description"
+           },
+           "fullDescription": {
+               "text": "description"
+           }
+       }
+       ]
+  }
+  },
+   "invocations": [
+       {
+        "commandLine": "./goblint --sarif -o /home/alex/Documents/git/analyzer/testResults/28-race_reach/01-lval_eval.c.sarif /home/alex/Documents/git/analyzer/tests/regression/03-practical/01-lval_eval.c",
+        "executionSuccessful": true
+       }
+   ],
+   "defaultSourceLanguage": "C",
+   "results": [
+    {
+        "ruleId": "Unknown",
+        "level": "warning",
+        "message": {
+            "text": "Invalidating expressions: AddrOf(Var(tmp, NoOffset))"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/01-lval_eval.c"
+              },
+              "region": {
+                "startLine":7,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":7
+             }
+           }
+       }
+       ]
+    },
+    {
+        "ruleId": "Unknown",
+        "level": "warning",
+        "message": {
+            "text": "Unknown address in {&tmp} has escaped."
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/01-lval_eval.c"
+              },
+              "region": {
+                "startLine":7,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":7
+             }
+           }
+       }
+       ]
+    },
+    {
+        "ruleId": "Undefined",
+        "level": "warning",
+        "message": {
+            "text": "May dereference NULL pointer"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/01-lval_eval.c"
+              },
+              "region": {
+                "startLine":8,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":8
+             }
+           }
+       }
+       ]
+    }
+   ]
+   }
+  ]
+}

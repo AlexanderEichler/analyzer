@@ -1,0 +1,129 @@
+{
+ "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+  {
+  "tool": {
+     "driver": {
+       "name": "goblint",
+       "fullName": "goblint static analyser",
+       "informationUri": "https://github.com/goblint/analyzer",
+       "version": "1",
+       "downloadUri": "https://github.com/goblint/analyzer",
+        "rules": [
+        {
+           "id": "1",
+           "helpUri": "https://github.com/goblint/analyzer",
+           "help": {
+               "text": "helptext"
+           },
+          "shortDescription": {
+               "text": "description"
+           },
+           "fullDescription": {
+               "text": "description"
+           }
+       }
+       ]
+  }
+  },
+   "invocations": [
+       {
+        "commandLine": "./goblint --sarif -o /home/alex/Documents/git/analyzer/testResults/00-sanity/13-pfscan_minimal.c.sarif /home/alex/Documents/git/analyzer/tests/regression/03-practical/13-pfscan_minimal.c",
+        "executionSuccessful": true
+       }
+   ],
+   "defaultSourceLanguage": "C",
+   "results": [
+    {
+        "ruleId": "Unknown",
+        "level": "warning",
+        "message": {
+            "text": "Unknown value type given as function argument"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"initfun"
+              },
+              "region": {
+                "startLine":0,
+                "startColumn":0,
+                "endColumn":0,
+                "endLine":0
+             }
+           }
+       }
+       ]
+    },
+    {
+        "ruleId": "Unknown",
+        "level": "warning",
+        "message": {
+            "text": "Function definition missing for get"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/13-pfscan_minimal.c"
+              },
+              "region": {
+                "startLine":11,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":11
+             }
+           }
+       }
+       ]
+    },
+    {
+        "ruleId": "Unknown",
+        "level": "warning",
+        "message": {
+            "text": "INVALIDATING ALL GLOBALS!"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/13-pfscan_minimal.c"
+              },
+              "region": {
+                "startLine":11,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":11
+             }
+           }
+       }
+       ]
+    },
+    {
+        "ruleId": "Unknown",
+        "level": "warning",
+        "message": {
+            "text": "Invalidating expressions: AddrOf(Var(tmp, NoOffset))"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/13-pfscan_minimal.c"
+              },
+              "region": {
+                "startLine":11,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":11
+             }
+           }
+       }
+       ]
+    }
+   ]
+   }
+  ]
+}

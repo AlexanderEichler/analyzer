@@ -1,0 +1,63 @@
+{
+ "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+  {
+  "tool": {
+     "driver": {
+       "name": "goblint",
+       "fullName": "goblint static analyser",
+       "informationUri": "https://github.com/goblint/analyzer",
+       "version": "1",
+       "downloadUri": "https://github.com/goblint/analyzer",
+        "rules": [
+        {
+           "id": "1",
+           "helpUri": "https://github.com/goblint/analyzer",
+           "help": {
+               "text": "helptext"
+           },
+          "shortDescription": {
+               "text": "description"
+           },
+           "fullDescription": {
+               "text": "description"
+           }
+       }
+       ]
+  }
+  },
+   "invocations": [
+       {
+        "commandLine": "./goblint --sarif -o /home/alex/Documents/git/analyzer/testResults/05-lval_ls/07-nonterm.c.sarif /home/alex/Documents/git/analyzer/tests/regression/03-practical/07-nonterm.c",
+        "executionSuccessful": true
+       }
+   ],
+   "defaultSourceLanguage": "C",
+   "results": [
+    {
+        "ruleId": "Unknown",
+        "level": "none",
+        "message": {
+            "text": "Query function answered {([t_fun@/home/alex/Documents/git/analyzer/tests/regression/03-practical/07-nonterm.c:18:3, main], {})}"
+         },
+        "locations": [
+        {
+           "physicalLocation": {
+              "artifactLocation": {
+                "uri":"/home/alex/Documents/git/analyzer/tests/regression/03-practical/07-nonterm.c"
+              },
+              "region": {
+                "startLine":22,
+                "startColumn":3,
+                "endColumn":3,
+                "endLine":22
+             }
+           }
+       }
+       ]
+    }
+   ]
+   }
+  ]
+}
