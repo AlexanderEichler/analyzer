@@ -90,6 +90,7 @@ let option_spec_list =
     set_bool "g2html" false;
     set_bool "dbg.verbose" true;
     set_bool "gobview" true;
+    set_bool "warn.race" true;
     set_string "warn_at" "early";
     set_string "result" "sarif"
   in

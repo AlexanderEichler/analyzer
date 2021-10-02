@@ -159,14 +159,16 @@ struct
     let one_w f x = BatPrintf.fprintf f "\n<warning>%a</warning>" one_w x in
     List.iter (one_w f) !Messages.Table.messages_list
    
-    
-  
-          
+ 
   let print_physicalLocationPiece f Messages.Piece.{loc; text = m; _} =
+     (* for the github action removes leading ./analysistarget/*)
+        let trimFile (path:string) = 
+          Str.string_after  path 17;  
+          in
         match loc with
         | Some l ->
             BatPrintf.fprintf f "       \"physicalLocation\": " ;             
-            BatPrintf.fprintf f "{\n              \"artifactLocation\": {\n                \"uri\":\"%s\"\n              },\n" l.file ;
+            BatPrintf.fprintf f "{\n              \"artifactLocation\": {\n                \"uri\":\"%s\"\n              },\n" (trimFile l.file) ;
             BatPrintf.fprintf f "              \"region\": {\n";
             BatPrintf.fprintf f "                \"startLine\":%d,\n" l.line ; 
             BatPrintf.fprintf f "                \"startColumn\":%d,\n" l.column ; 
@@ -221,15 +223,30 @@ struct
       BatPrintf.fprintf f "           }\n  ";
       BatPrintf.fprintf f "     }\n  "
 
-  let printSarifResults f (xs:value M.t) =  
+  let getBehavior (behavior:MessageCategory.behavior) = match behavior with
+        | Implementation-> "Implementation";
+        | Machine-> "Machine";
+        | Undefined u-> "Undefined"
+  let returnCategoryId f (cat:MessageCategory.category)= match cat with
+    | MessageCategory.Assert -> "Assert";
+    | MessageCategory.Race -> "Race";
+    | MessageCategory.Unknown -> "Unknown";
+    | MessageCategory.Analyzer -> "Analyzer";
+    | MessageCategory.Behavior b -> getBehavior b;
+    | MessageCategory.Cast c -> "TypeMismatch";
+    | MessageCategory.Integer i -> match i with 
+          | Overflow -> "Overflow";
+          | DivByZero -> "DivByZero"
+  
+  let printSarifResults f (xs:value M.t) =         
           let rec printTags f (tags:Messages.Tags.t)= match tags with 
-           | [] ->BatPrintf.fprintf f "    {\n        \"ruleId\": \"%d\","1;
+           | [] ->BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," "1";
            | x::xs -> match x with 
-            | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%d\","cwe;
-            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%d\"," 1; 
+            | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
+            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," ( MessageCategory.show cat ); 
           in       
-         let printOneResult (message:Messages.Message.t )=     
-             printTags f message.tags;
+         let printOneResult (message:Messages.Message.t )=             
+             printTags f   message.tags;    
              (*BatPrintf.fprintf f "    {\n        \"ruleId\": \"%d\","1;*)
              BatPrintf.fprintf f "\n        \"level\": \"%s\"," (severityToLevel message.severity) ;            
              printMultipiece f message.multipiece;
@@ -245,9 +262,9 @@ struct
                     BatPrintf.fprintf f ",\n";
                     printResults xs;
           in  
-          (*BatPrintf.fprintf f "%d"(List.length !Messages.Table.messages_list) ; *)
+          (*BatPrintf.fprintf f "MessageTable length %d"(List.length !Messages.Table.messages_list) ; *)
           printResults (List.rev !Messages.Table.messages_list)
-     
+  
   let output table gtable gtfxml (file: file) =
     let out = Messages.get_out result_name !GU.out in
     match get_string "result" with
@@ -333,7 +350,7 @@ struct
         fprintf f "    \"rules\": [\n  ";
         printSarifRules f;
         fprintf f "     ]\n  ";
-        fprintf f "}\n  ";  
+        fprintf f "   }\n  ";  
         fprintf f "},\n";
         fprintf f "\   \"invocations\": [\n       ";
         fprintf f "{\n";        
