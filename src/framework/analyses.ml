@@ -160,12 +160,19 @@ struct
     List.iter (one_w f) !Messages.Table.messages_list
    
  
-  let print_physicalLocationPiece f Messages.Piece.{loc; text = m; _} =
+  let print_physicalLocationPiece f Messages.Piece.{loc; text = m; context=con;} =
+        let printContext f (context:Obj.t option) =  match context with 
+              | Some c -> BatPrintf.fprintf f "has context\n";
+                      BatPrintf.fprintf f "%d\n" (Obj.reachable_words c);
+              | None -> ();
+        in
      (* for the github action removes leading ./analysistarget/*)
         let trimFile (path:string) = 
           Str.string_after  path 17;  
           in
         match loc with
+        | None ->
+          () (* TODO: not outputting warning without location *)
         | Some l ->
             BatPrintf.fprintf f "       \"physicalLocation\": " ;             
             BatPrintf.fprintf f "{\n              \"artifactLocation\": {\n                \"uri\":\"%s\"\n              },\n" (trimFile l.file) ;
@@ -173,11 +180,14 @@ struct
             BatPrintf.fprintf f "                \"startLine\":%d,\n" l.line ; 
             BatPrintf.fprintf f "                \"startColumn\":%d,\n" l.column ; 
             BatPrintf.fprintf f "                \"endColumn\":%d,\n" l.column ; 
-            BatPrintf.fprintf f "                \"endLine\":%d\n" l.line ;         
-            BatPrintf.fprintf f "             }\n";
+            BatPrintf.fprintf f "                \"endLine\":%d\n" l.line ;    
+            (*printContext f con;*)
+            BatPrintf.fprintf f "             }\n"
+            
            
-         | None ->
-          () (* TODO: not outputting warning without location *)
+             
+           
+       
          
   let printMultipiece f (mp:Messages.MultiPiece.t)= 
       let rec printPieces f (pieces:Messages.Piece.t list)= match pieces with 
@@ -210,29 +220,49 @@ struct
   
   let printSarifRules f = 
       BatPrintf.fprintf f "      {\n";
-      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "1";
-      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://github.com/goblint/analyzer";
+      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "CWE476";
+      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/476.html";
       BatPrintf.fprintf f "           \"help\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "helptext";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "NULL Pointer Dereference";
       BatPrintf.fprintf f "           },\n";
       BatPrintf.fprintf f "          \"shortDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "description";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "NULL Pointer Dereference";
       BatPrintf.fprintf f "           },\n";
       BatPrintf.fprintf f "           \"fullDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "description";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "NULL pointer dereference issues can occur through a number of flaws, including race conditions, and simple programming omissions. ";
+      BatPrintf.fprintf f "           }\n  ";
+      BatPrintf.fprintf f "     },\n  ";
+      BatPrintf.fprintf f "      {\n";
+      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "CWE788";
+      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/788.html";
+      BatPrintf.fprintf f "           \"help\": {\n";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Access of Memory Location After End of Buffer";
+      BatPrintf.fprintf f "           },\n";
+      BatPrintf.fprintf f "          \"shortDescription\": {\n";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "The software reads or writes to a buffer using an index or pointer that references a memory location after the end of the buffer. ";
+      BatPrintf.fprintf f "           },\n";
+      BatPrintf.fprintf f "           \"fullDescription\": {\n";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "This typically occurs when a pointer or its index is decremented to a position before the buffer; when pointer arithmetic results in a position before the buffer; or when a negative index is used, which generates a position before the buffer.  ";
       BatPrintf.fprintf f "           }\n  ";
       BatPrintf.fprintf f "     }\n  "
 
-  let getBehavior (behavior:MessageCategory.behavior) = match behavior with
+  let getBehaviorCWE (behavior:MessageCategory.behavior) = match behavior with
         | Implementation-> "Implementation";
         | Machine-> "Machine";
-        | Undefined u-> "Undefined"
-  let returnCategoryId f (cat:MessageCategory.category)= match cat with
+        | Undefined u-> match u with 
+          | NullPointerDereference -> "CWE-476";
+          | UseAfterFree -> ""
+          | ArrayOutOfBounds aob -> match aob with
+              | PastEnd -> "CWE-788";
+              | BeforeStart -> "CWE-124: Buffer Underwrite";
+              | Unknown -> "CWE-787"
+        
+  let returnCategoryCWE f (cat:MessageCategory.category)= match cat with
     | MessageCategory.Assert -> "Assert";
     | MessageCategory.Race -> "Race";
     | MessageCategory.Unknown -> "Unknown";
     | MessageCategory.Analyzer -> "Analyzer";
-    | MessageCategory.Behavior b -> getBehavior b;
+    | MessageCategory.Behavior b -> getBehaviorCWE b;
     | MessageCategory.Cast c -> "TypeMismatch";
     | MessageCategory.Integer i -> match i with 
           | Overflow -> "Overflow";
