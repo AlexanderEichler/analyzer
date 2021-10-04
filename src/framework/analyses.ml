@@ -332,7 +332,7 @@ struct
     
   let printSarifResults f (xs:value M.t) =         
           let rec printTags f (tags:Messages.Tags.t)= match tags with 
-           | [] ->BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," "1";
+           | [] ->BatPrintf.fprintf f "  Unexpected Error,  empty tags in Messages.Tags";
            | x::xs -> match x with 
             | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
              (* | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); *)
