@@ -292,15 +292,15 @@ struct
   let printSarifRules f =
       BatPrintf.fprintf f "      {\n";
       BatPrintf.fprintf f "           \"id\": \"%s\",\n" "Unknown";
-      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/476.html";
+      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://goblint.in.tum.de/home";
       BatPrintf.fprintf f "           \"help\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Unknown";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "This result does't have a category or a CWE";
       BatPrintf.fprintf f "           },\n";
       BatPrintf.fprintf f "          \"shortDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Unknown";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "The result does't have a category or a CWE ";
       BatPrintf.fprintf f "           },\n";
       BatPrintf.fprintf f "           \"fullDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Unknown";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Goblint does not provide a category or CWE for this result";
       BatPrintf.fprintf f "           }\n  ";
       BatPrintf.fprintf f "     },\n  "; 
       BatPrintf.fprintf f "      {\n";
