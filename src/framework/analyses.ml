@@ -335,8 +335,8 @@ struct
            | [] ->BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," "1";
            | x::xs -> match x with 
             | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
-              | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); 
-            (*| Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (returnCategoryCWE cat ); *)
+             (* | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); *)
+            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (returnCategoryCWE cat ); 
           in       
          let printOneResult (message:Messages.Message.t )=             
              printTags f   message.tags;    
