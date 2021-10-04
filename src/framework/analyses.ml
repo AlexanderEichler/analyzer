@@ -218,7 +218,91 @@ struct
       | Debug -> "none"
       | Success -> "none"
   
-  let printSarifRules f = 
+  
+
+  let getBehaviorCWE (behavior:MessageCategory.behavior) = match behavior with
+        | Implementation-> "Implementation";
+        | Machine-> "Machine";
+        | Undefined u-> match u with 
+          | NullPointerDereference -> "476";
+          | UseAfterFree -> "416"
+          | ArrayOutOfBounds arrayOutOfBounds -> match arrayOutOfBounds with
+              | PastEnd -> "788";
+              | BeforeStart -> "124:";
+              | Unknown -> "787"
+        
+  let returnCategoryCWE (cat:MessageCategory.category)= match cat with
+    | MessageCategory.Assert -> "Assert";
+    | MessageCategory.Race -> "Race";
+    | MessageCategory.Unknown -> "Category Unknown";
+    | MessageCategory.Analyzer -> "Analyzer";
+    | MessageCategory.Behavior b -> getBehaviorCWE b;
+    | MessageCategory.Cast c -> "TypeMismatch";
+    | MessageCategory.Integer i -> match i with 
+          | Overflow -> "190";
+          | DivByZero -> "369"
+
+  let printCWE f (cwe:string) = 
+      let getDescription (cwe:string) = match cwe with 
+         | "124" -> ("Buffer Underwrite",
+        "This typically occurs when a pointer or its index is decremented to a position before the buffer,
+         when pointer arithmetic results in a position before the beginning of the valid memory location, or when a negative index is used. ");
+        
+         | "190" -> ("Integer Overflow or Wraparound",
+        "An integer overflow or wraparound occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs, the value may wrap to become a very small or negative number. While this may be intended behavior in circumstances that rely on wrapping, it can have security consequences if the wrap is unexpected. This is especially the case if the integer overflow can be triggered using user-supplied inputs. This becomes security-critical when the result is used to control looping, make a security decision, 
+        or determine the offset or size in behaviors such as memory allocation, copying, concatenation, etc.  ");
+        
+         | "369" -> (" Divide By Zero",
+        "This weakness typically occurs when an unexpected value is provided to the product, or if an error occurs that is not properly detected.
+         It frequently occurs in calculations involving physical dimensions such as size, length, width, and height.   ");
+        | "416" -> ("Use After Free",
+        "The use of previously-freed memory can have any number of adverse consequences, ranging from the corruption of valid data to the execution of arbitrary code, depending on the instantiation and timing of the flaw. 
+        The simplest way data corruption may occur involves the system's reuse of the freed memory. Use-after-free errors have two common and sometimes overlapping causes:
+            Error conditions and other exceptional circumstances.
+             Confusion over which part of the program is responsible for freeing the memory. 
+        In this scenario, the memory in question is allocated to another pointer validly at some point after it has been freed. The original pointer to the freed memory is used again and points to somewhere within the new allocation. As the data is changed, it corrupts the validly used memory; this induces undefined behavior in the process.
+        If the newly allocated data chances to hold a class, in C++ for example, various function pointers may be scattered within the heap data. If one of these function pointers is overwritten with an address to valid shellcode, execution of arbitrary code can be achieved. "); 
+        | "476" -> ("NULL Pointer Dereference",
+        "NULL pointer dereference issues can occur through a number of flaws, including race conditions, and simple programming omissions. ");
+         | "787" -> ("Out-of-bounds Write",
+        "Typically, this can result in corruption of data, a crash, or code execution. The software may modify an index or perform pointer arithmetic that references a memory location that is outside of the boundaries of the buffer. 
+        A subsequent write operation then produces undefined or unexpected results. ");
+        
+        | "788" -> ("Access of Memory Location After End of Buffer",
+        "This typically occurs when a pointer or its index is decremented to a position before the buffer; when pointer arithmetic results in a position before the buffer; or when a negative index is used, which generates a position before the buffer.  ");
+        | _ -> ("invalid","invalid");
+      in
+      match getDescription cwe with 
+        | ("invalid","invalid") -> BatPrintf.fprintf f "";
+        | (shortDescription,longDescription) -> 
+        BatPrintf.fprintf f "      {\n";
+        BatPrintf.fprintf f "           \"id\": \"%s\",\n" cwe;
+        BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" ("https://cwe.mitre.org/data/definitions/" ^cwe^"476.html");
+        BatPrintf.fprintf f "           \"help\": {\n";
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" shortDescription;
+        BatPrintf.fprintf f "           },\n";
+        BatPrintf.fprintf f "          \"shortDescription\": {\n";
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" shortDescription;
+        BatPrintf.fprintf f "           },\n";
+        BatPrintf.fprintf f "           \"fullDescription\": {\n";
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" longDescription;
+        BatPrintf.fprintf f "           }\n  ";
+        BatPrintf.fprintf f "     },\n  "
+
+  let printSarifRules f =
+      BatPrintf.fprintf f "      {\n";
+      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "Unknown";
+      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/476.html";
+      BatPrintf.fprintf f "           \"help\": {\n";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Unknown";
+      BatPrintf.fprintf f "           },\n";
+      BatPrintf.fprintf f "          \"shortDescription\": {\n";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Unknown";
+      BatPrintf.fprintf f "           },\n";
+      BatPrintf.fprintf f "           \"fullDescription\": {\n";
+      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Unknown";
+      BatPrintf.fprintf f "           }\n  ";
+      BatPrintf.fprintf f "     },\n  "; 
       BatPrintf.fprintf f "      {\n";
       BatPrintf.fprintf f "           \"id\": \"%s\",\n" "CWE476";
       BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/476.html";
@@ -245,35 +329,14 @@ struct
       BatPrintf.fprintf f "               \"text\": \"%s\"\n" "This typically occurs when a pointer or its index is decremented to a position before the buffer; when pointer arithmetic results in a position before the buffer; or when a negative index is used, which generates a position before the buffer.  ";
       BatPrintf.fprintf f "           }\n  ";
       BatPrintf.fprintf f "     }\n  "
-
-  let getBehaviorCWE (behavior:MessageCategory.behavior) = match behavior with
-        | Implementation-> "Implementation";
-        | Machine-> "Machine";
-        | Undefined u-> match u with 
-          | NullPointerDereference -> "CWE-476";
-          | UseAfterFree -> ""
-          | ArrayOutOfBounds aob -> match aob with
-              | PastEnd -> "CWE-788";
-              | BeforeStart -> "CWE-124: Buffer Underwrite";
-              | Unknown -> "CWE-787"
-        
-  let returnCategoryCWE f (cat:MessageCategory.category)= match cat with
-    | MessageCategory.Assert -> "Assert";
-    | MessageCategory.Race -> "Race";
-    | MessageCategory.Unknown -> "Unknown";
-    | MessageCategory.Analyzer -> "Analyzer";
-    | MessageCategory.Behavior b -> getBehaviorCWE b;
-    | MessageCategory.Cast c -> "TypeMismatch";
-    | MessageCategory.Integer i -> match i with 
-          | Overflow -> "Overflow";
-          | DivByZero -> "DivByZero"
-  
+    
   let printSarifResults f (xs:value M.t) =         
           let rec printTags f (tags:Messages.Tags.t)= match tags with 
            | [] ->BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," "1";
            | x::xs -> match x with 
             | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
-            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," ( MessageCategory.show cat ); 
+              | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); 
+            (*| Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (returnCategoryCWE cat ); *)
           in       
          let printOneResult (message:Messages.Message.t )=             
              printTags f   message.tags;    
@@ -373,9 +436,9 @@ struct
         fprintf f "\ \"driver\": {\n       ";
         fprintf f "\"name\": \"%s\",\n       " "goblint";
         fprintf f "\"fullName\": \"%s\",\n       " "goblint static analyser";   
-        fprintf f "\"informationUri\": \"%s\",\n       " "https://github.com/goblint/analyzer";
-        fprintf f "\"version\": \"%d\",\n       " 1;  
-        (* use Version.goblint*)   
+        fprintf f "\"informationUri\": \"%s\",\n       " "https://goblint.in.tum.de/home";
+        fprintf f "\"organisation\": \"%s\",\n       " "TUM ";
+        fprintf f "\"version\": \"%s\",\n       " Version.goblint; 
         fprintf f "\"downloadUri\": \"%s\",\n    " "https://github.com/goblint/analyzer";
         fprintf f "    \"rules\": [\n  ";
         printSarifRules f;
