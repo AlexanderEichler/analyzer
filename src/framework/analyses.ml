@@ -437,7 +437,7 @@ struct
         fprintf f "\"name\": \"%s\",\n       " "goblint";
         fprintf f "\"fullName\": \"%s\",\n       " "goblint static analyser";   
         fprintf f "\"informationUri\": \"%s\",\n       " "https://goblint.in.tum.de/home";
-        fprintf f "\"organisation\": \"%s\",\n       " "TUM ";
+        fprintf f "\"organization\": \"%s\",\n       " "TUM ";
         fprintf f "\"version\": \"%s\",\n       " Version.goblint; 
         fprintf f "\"downloadUri\": \"%s\",\n    " "https://github.com/goblint/analyzer";
         fprintf f "    \"rules\": [\n  ";
