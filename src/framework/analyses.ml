@@ -6,6 +6,7 @@ open GobConfig
 
 module GU = Goblintutil
 module M  = Messages
+module S = Sarif
 
 (** Analysis starts from lists of functions: start functions, exit functions, and
   * other functions. *)
@@ -205,10 +206,9 @@ struct
                print_physicalLocationPiece f  piece;                              
                BatPrintf.fprintf f "           }\n";              
            | Group {group_text = n; pieces = e} ->
-           BatPrintf.fprintf f "\n \n\n\ \n\n      Multipiece!!!\n\n\n\n\n\n    ";
                 BatPrintf.fprintf f "\n        \"locations\": [\n        {\n    ";
-                printPieces f e
-                 
+                printPieces f e;
+                 BatPrintf.fprintf f "           }\n"
                            
 
    let severityToLevel (severity:Messages.Severity.t)= match severity with
@@ -218,9 +218,7 @@ struct
       | Debug -> "none"
       | Success -> "none"
   
-  
-
-  let getBehaviorCWE (behavior:MessageCategory.behavior) = match behavior with
+   let getBehaviorCategory (behavior:MessageCategory.behavior) = match behavior with
         | Implementation-> "Implementation";
         | Machine-> "Machine";
         | Undefined u-> match u with 
@@ -228,58 +226,29 @@ struct
           | UseAfterFree -> "416"
           | ArrayOutOfBounds arrayOutOfBounds -> match arrayOutOfBounds with
               | PastEnd -> "788";
-              | BeforeStart -> "124:";
-              | Unknown -> "787"
+              | BeforeStart -> "786:";
+              | Unknown -> "119"
         
-  let returnCategoryCWE (cat:MessageCategory.category)= match cat with
+  let returnCategory (cat:MessageCategory.category)= match cat with
     | MessageCategory.Assert -> "Assert";
     | MessageCategory.Race -> "Race";
     | MessageCategory.Unknown -> "Category Unknown";
     | MessageCategory.Analyzer -> "Analyzer";
-    | MessageCategory.Behavior b -> getBehaviorCWE b;
-    | MessageCategory.Cast c -> "TypeMismatch";
+    | MessageCategory.Behavior b -> getBehaviorCategory b;
+    | MessageCategory.Cast c -> "241";
     | MessageCategory.Integer i -> match i with 
           | Overflow -> "190";
           | DivByZero -> "369"
-
-  let printCWE f (cwe:string) = 
-      let getDescription (cwe:string) = match cwe with 
-         | "124" -> ("Buffer Underwrite",
-        "This typically occurs when a pointer or its index is decremented to a position before the buffer,
-         when pointer arithmetic results in a position before the beginning of the valid memory location, or when a negative index is used. ");
-        
-         | "190" -> ("Integer Overflow or Wraparound",
-        "An integer overflow or wraparound occurs when an integer value is incremented to a value that is too large to store in the associated representation. When this occurs, the value may wrap to become a very small or negative number. While this may be intended behavior in circumstances that rely on wrapping, it can have security consequences if the wrap is unexpected. This is especially the case if the integer overflow can be triggered using user-supplied inputs. This becomes security-critical when the result is used to control looping, make a security decision, 
-        or determine the offset or size in behaviors such as memory allocation, copying, concatenation, etc.  ");
-        
-         | "369" -> (" Divide By Zero",
-        "This weakness typically occurs when an unexpected value is provided to the product, or if an error occurs that is not properly detected.
-         It frequently occurs in calculations involving physical dimensions such as size, length, width, and height.   ");
-        | "416" -> ("Use After Free",
-        "The use of previously-freed memory can have any number of adverse consequences, ranging from the corruption of valid data to the execution of arbitrary code, depending on the instantiation and timing of the flaw. 
-        The simplest way data corruption may occur involves the system's reuse of the freed memory. Use-after-free errors have two common and sometimes overlapping causes:
-            Error conditions and other exceptional circumstances.
-             Confusion over which part of the program is responsible for freeing the memory. 
-        In this scenario, the memory in question is allocated to another pointer validly at some point after it has been freed. The original pointer to the freed memory is used again and points to somewhere within the new allocation. As the data is changed, it corrupts the validly used memory; this induces undefined behavior in the process.
-        If the newly allocated data chances to hold a class, in C++ for example, various function pointers may be scattered within the heap data. If one of these function pointers is overwritten with an address to valid shellcode, execution of arbitrary code can be achieved. "); 
-        | "476" -> ("NULL Pointer Dereference",
-        "NULL pointer dereference issues can occur through a number of flaws, including race conditions, and simple programming omissions. ");
-         | "787" -> ("Out-of-bounds Write",
-        "Typically, this can result in corruption of data, a crash, or code execution. The software may modify an index or perform pointer arithmetic that references a memory location that is outside of the boundaries of the buffer. 
-        A subsequent write operation then produces undefined or unexpected results. ");
-        
-        | "788" -> ("Access of Memory Location After End of Buffer",
-        "This typically occurs when a pointer or its index is decremented to a position before the buffer; when pointer arithmetic results in a position before the buffer; or when a negative index is used, which generates a position before the buffer.  ");
-        | _ -> ("invalid","invalid");
-      in
-      match getDescription cwe with 
-        | ("invalid","invalid") -> BatPrintf.fprintf f "";
-        | (shortDescription,longDescription) -> 
+ 
+  let rec printCategorieRules f (categories:string list) = 
+      let printSingleCategory f cat = match Sarif.Sarif.getDescription cat with 
+        | ("invalid","invalid","invalid","invalid","invalid") -> BatPrintf.fprintf f "";
+        | (id,shortDescription,helpText,helpUri,longDescription) -> 
         BatPrintf.fprintf f "      {\n";
-        BatPrintf.fprintf f "           \"id\": \"%s\",\n" cwe;
-        BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" ("https://cwe.mitre.org/data/definitions/" ^cwe^"476.html");
+        BatPrintf.fprintf f "           \"id\": \"%s\",\n" id;
+        BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" helpUri;
         BatPrintf.fprintf f "           \"help\": {\n";
-        BatPrintf.fprintf f "               \"text\": \"%s\"\n" shortDescription;
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" helpText;
         BatPrintf.fprintf f "           },\n";
         BatPrintf.fprintf f "          \"shortDescription\": {\n";
         BatPrintf.fprintf f "               \"text\": \"%s\"\n" shortDescription;
@@ -287,56 +256,27 @@ struct
         BatPrintf.fprintf f "           \"fullDescription\": {\n";
         BatPrintf.fprintf f "               \"text\": \"%s\"\n" longDescription;
         BatPrintf.fprintf f "           }\n  ";
-        BatPrintf.fprintf f "     },\n  "
+        BatPrintf.fprintf f "     }"
+      in
+      match categories with 
+        | [] ->  BatPrintf.fprintf f "";
+        | x::[] -> printSingleCategory f x;
+        | x::xs -> printSingleCategory f x;
+        (*BatPrintf.fprintf f ",";*)
+        BatPrintf.fprintf f "\n";
+                
+                printCategorieRules f xs
+     
 
-  let printSarifRules f =
-      BatPrintf.fprintf f "      {\n";
-      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "Unknown";
-      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://goblint.in.tum.de/home";
-      BatPrintf.fprintf f "           \"help\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "This result does't have a category or a CWE";
-      BatPrintf.fprintf f "           },\n";
-      BatPrintf.fprintf f "          \"shortDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "The result does't have a category or a CWE ";
-      BatPrintf.fprintf f "           },\n";
-      BatPrintf.fprintf f "           \"fullDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Goblint does not provide a category or CWE for this result";
-      BatPrintf.fprintf f "           }\n  ";
-      BatPrintf.fprintf f "     },\n  "; 
-      BatPrintf.fprintf f "      {\n";
-      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "CWE476";
-      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/476.html";
-      BatPrintf.fprintf f "           \"help\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "NULL Pointer Dereference";
-      BatPrintf.fprintf f "           },\n";
-      BatPrintf.fprintf f "          \"shortDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "NULL Pointer Dereference";
-      BatPrintf.fprintf f "           },\n";
-      BatPrintf.fprintf f "           \"fullDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "NULL pointer dereference issues can occur through a number of flaws, including race conditions, and simple programming omissions. ";
-      BatPrintf.fprintf f "           }\n  ";
-      BatPrintf.fprintf f "     },\n  ";
-      BatPrintf.fprintf f "      {\n";
-      BatPrintf.fprintf f "           \"id\": \"%s\",\n" "CWE788";
-      BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" "https://cwe.mitre.org/data/definitions/788.html";
-      BatPrintf.fprintf f "           \"help\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "Access of Memory Location After End of Buffer";
-      BatPrintf.fprintf f "           },\n";
-      BatPrintf.fprintf f "          \"shortDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "The software reads or writes to a buffer using an index or pointer that references a memory location after the end of the buffer. ";
-      BatPrintf.fprintf f "           },\n";
-      BatPrintf.fprintf f "           \"fullDescription\": {\n";
-      BatPrintf.fprintf f "               \"text\": \"%s\"\n" "This typically occurs when a pointer or its index is decremented to a position before the buffer; when pointer arithmetic results in a position before the buffer; or when a negative index is used, which generates a position before the buffer.  ";
-      BatPrintf.fprintf f "           }\n  ";
-      BatPrintf.fprintf f "     }\n  "
+  
     
-  let printSarifResults f (xs:value M.t) =         
+  let printSarifResults f table =         
           let rec printTags f (tags:Messages.Tags.t)= match tags with 
            | [] ->BatPrintf.fprintf f "  Unexpected Error,  empty tags in Messages.Tags";
            | x::xs -> match x with 
             | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
              (* | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); *)
-            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (returnCategoryCWE cat ); 
+            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (returnCategory cat ); 
           in       
          let printOneResult (message:Messages.Message.t )=             
              printTags f   message.tags;    
@@ -441,7 +381,7 @@ struct
         fprintf f "\"version\": \"%s\",\n       " Version.goblint; 
         fprintf f "\"downloadUri\": \"%s\",\n    " "https://github.com/goblint/analyzer";
         fprintf f "    \"rules\": [\n  ";
-        printSarifRules f;
+        printCategorieRules f ["124";"190";"281"];
         fprintf f "     ]\n  ";
         fprintf f "   }\n  ";  
         fprintf f "},\n";
@@ -452,7 +392,8 @@ struct
         fprintf f "   }\n";  
         fprintf f "   ],\n" ;
         fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
-        fprintf f "   \"results\": [\n%a" printSarifResults (Lazy.force table) ;
+        (*(Lazy.force table) *)
+        fprintf f "   \"results\": [\n%a" printSarifResults (Lazy.force table);
         fprintf f "   ]\n" ;
         fprintf f "   }\n  " ;
         fprintf f "]\n" ;       
