@@ -1,3 +1,6 @@
+(** The Sarif format is a standardised output format for static analysis tools. https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html *)
+
+
 open Cil
 open Pretty
 open GobConfig
@@ -22,9 +25,10 @@ struct
     id: String.t;
     information:Information.t;    
   } 
+
   (* returns (id,helpText,shortDescription,helpUri,longDescription) *)
   let getDescription (category:string) = match category with 
-         |"Analyzer" -> ("Analyzer","","","","");
+         |"Analyzer" -> ("Analyzer","The category analyser describes ....","","https://goblint.in.tum.de/home","");
           |"119" -> ("GO"^category,
           "Improper Restriction of Operations within the Bounds of a Memory Buffer"
           ,"The software performs operations on a memory buffer, but it can read from or write to a memory location that is outside of the intended boundary of the buffer. ",
@@ -81,5 +85,52 @@ struct
          when pointer arithmetic results in a position before the buffer; or when a negative index is used, which generates a position before the buffer.  ");
         | _ -> ("invalid","invalid","invalid","invalid","invalid")
 
+   let rec printCategorieRules f (categories:string list) = 
+      let printSingleCategory f cat = match getDescription cat with 
+        | ("invalid","invalid","invalid","invalid","invalid") -> BatPrintf.fprintf f "";
+        | (id,shortDescription,helpText,helpUri,longDescription) -> 
+        BatPrintf.fprintf f "      {\n";
+        BatPrintf.fprintf f "           \"id\": \"%s\",\n" id;
+        BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" helpUri;
+        BatPrintf.fprintf f "           \"help\": {\n";
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" helpText;
+        BatPrintf.fprintf f "           },\n";
+        BatPrintf.fprintf f "          \"shortDescription\": {\n";
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" shortDescription;
+        BatPrintf.fprintf f "           },\n";
+        BatPrintf.fprintf f "           \"fullDescription\": {\n";
+        BatPrintf.fprintf f "               \"text\": \"%s\"\n" longDescription;
+        BatPrintf.fprintf f "           }\n  ";
+        BatPrintf.fprintf f "     }"
+      in
+      match categories with 
+        | [] ->  BatPrintf.fprintf f "";
+        | x::[] -> printSingleCategory f x;
+        | x::xs -> printSingleCategory f x;
+        (*BatPrintf.fprintf f ",";*)
+        BatPrintf.fprintf f "\n";                
+          printCategorieRules f xs
+     
+  let getBehaviorCategory (behavior:MessageCategory.behavior) = match behavior with
+        | Implementation-> "Implementation";
+        | Machine-> "Machine";
+        | Undefined u-> match u with 
+          | NullPointerDereference -> "476";
+          | UseAfterFree -> "416"
+          | ArrayOutOfBounds arrayOutOfBounds -> match arrayOutOfBounds with
+              | PastEnd -> "788";
+              | BeforeStart -> "786:";
+              | Unknown -> "119"
+        
+  let returnCategory (cat:MessageCategory.category)= match cat with
+    | MessageCategory.Assert -> "Assert";
+    | MessageCategory.Race -> "Race";
+    | MessageCategory.Unknown -> "Category Unknown";
+    | MessageCategory.Analyzer -> "Analyzer";
+    | MessageCategory.Behavior b -> getBehaviorCategory b;
+    | MessageCategory.Cast c -> "241";
+    | MessageCategory.Integer i -> match i with 
+          | Overflow -> "190";
+          | DivByZero -> "369"
+ 
 end
-

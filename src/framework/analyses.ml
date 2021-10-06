@@ -218,54 +218,8 @@ struct
       | Debug -> "none"
       | Success -> "none"
   
-   let getBehaviorCategory (behavior:MessageCategory.behavior) = match behavior with
-        | Implementation-> "Implementation";
-        | Machine-> "Machine";
-        | Undefined u-> match u with 
-          | NullPointerDereference -> "476";
-          | UseAfterFree -> "416"
-          | ArrayOutOfBounds arrayOutOfBounds -> match arrayOutOfBounds with
-              | PastEnd -> "788";
-              | BeforeStart -> "786:";
-              | Unknown -> "119"
-        
-  let returnCategory (cat:MessageCategory.category)= match cat with
-    | MessageCategory.Assert -> "Assert";
-    | MessageCategory.Race -> "Race";
-    | MessageCategory.Unknown -> "Category Unknown";
-    | MessageCategory.Analyzer -> "Analyzer";
-    | MessageCategory.Behavior b -> getBehaviorCategory b;
-    | MessageCategory.Cast c -> "241";
-    | MessageCategory.Integer i -> match i with 
-          | Overflow -> "190";
-          | DivByZero -> "369"
+   
  
-  let rec printCategorieRules f (categories:string list) = 
-      let printSingleCategory f cat = match Sarif.Sarif.getDescription cat with 
-        | ("invalid","invalid","invalid","invalid","invalid") -> BatPrintf.fprintf f "";
-        | (id,shortDescription,helpText,helpUri,longDescription) -> 
-        BatPrintf.fprintf f "      {\n";
-        BatPrintf.fprintf f "           \"id\": \"%s\",\n" id;
-        BatPrintf.fprintf f "           \"helpUri\": \"%s\",\n" helpUri;
-        BatPrintf.fprintf f "           \"help\": {\n";
-        BatPrintf.fprintf f "               \"text\": \"%s\"\n" helpText;
-        BatPrintf.fprintf f "           },\n";
-        BatPrintf.fprintf f "          \"shortDescription\": {\n";
-        BatPrintf.fprintf f "               \"text\": \"%s\"\n" shortDescription;
-        BatPrintf.fprintf f "           },\n";
-        BatPrintf.fprintf f "           \"fullDescription\": {\n";
-        BatPrintf.fprintf f "               \"text\": \"%s\"\n" longDescription;
-        BatPrintf.fprintf f "           }\n  ";
-        BatPrintf.fprintf f "     }"
-      in
-      match categories with 
-        | [] ->  BatPrintf.fprintf f "";
-        | x::[] -> printSingleCategory f x;
-        | x::xs -> printSingleCategory f x;
-        (*BatPrintf.fprintf f ",";*)
-        BatPrintf.fprintf f "\n";
-                
-                printCategorieRules f xs
      
 
   
@@ -276,7 +230,7 @@ struct
            | x::xs -> match x with 
             | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
              (* | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); *)
-            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (returnCategory cat ); 
+            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (Sarif.Sarif.returnCategory cat ); 
           in       
          let printOneResult (message:Messages.Message.t )=             
              printTags f   message.tags;    
@@ -362,14 +316,14 @@ struct
           | GFun (fd,loc) -> SH.add file2funs loc.file fd.svar.vname
           | _ -> ()
         );      
-      let printSarifLogObject f =  
+      let printSarifHeader f =  
         (*let print version f (loc,n,fd)::xs= fprintf f "\"version\": \"%s\",\n  " "2.1.0"  in*)
         fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
         fprintf f "\"version\": \"%s\",\n  " "2.1.0";
       in 
       let write_file f fn =
         printf "Writing sarif to temp. file: %s\n%!" fn;
-        printSarifLogObject f;
+        printSarifHeader f;
         fprintf f "\"runs\": [\n  ";
         fprintf f "{\n  ";
         fprintf f "\"tool\": {\n    ";
@@ -381,7 +335,7 @@ struct
         fprintf f "\"version\": \"%s\",\n       " Version.goblint; 
         fprintf f "\"downloadUri\": \"%s\",\n    " "https://github.com/goblint/analyzer";
         fprintf f "    \"rules\": [\n  ";
-        printCategorieRules f ["124";"190";"281"];
+        Sarif.Sarif.printCategorieRules f ["124";"190";"281"];
         fprintf f "     ]\n  ";
         fprintf f "   }\n  ";  
         fprintf f "},\n";
