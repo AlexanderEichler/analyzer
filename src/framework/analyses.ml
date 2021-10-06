@@ -161,97 +161,12 @@ struct
     List.iter (one_w f) !Messages.Table.messages_list
    
  
-  let print_physicalLocationPiece f Messages.Piece.{loc; text = m; context=con;} =
-        let printContext f (context:Obj.t option) =  match context with 
-              | Some c -> BatPrintf.fprintf f "has context\n";
-                      BatPrintf.fprintf f "%d\n" (Obj.reachable_words c);
-              | None -> ();
-        in
-     (* for the github action removes leading ./analysistarget/*)
-        let trimFile (path:string) = 
-          Str.string_after  path 17;  
-          in
-        match loc with
-        | None ->
-          () (* TODO: not outputting warning without location *)
-        | Some l ->
-            BatPrintf.fprintf f "       \"physicalLocation\": " ;             
-            BatPrintf.fprintf f "{\n              \"artifactLocation\": {\n                \"uri\":\"%s\"\n              },\n" (trimFile l.file) ;
-            BatPrintf.fprintf f "              \"region\": {\n";
-            BatPrintf.fprintf f "                \"startLine\":%d,\n" l.line ; 
-            BatPrintf.fprintf f "                \"startColumn\":%d,\n" l.column ; 
-            BatPrintf.fprintf f "                \"endColumn\":%d,\n" l.column ; 
-            BatPrintf.fprintf f "                \"endLine\":%d\n" l.line ;    
-            (*printContext f con;*)
-            BatPrintf.fprintf f "             }\n"
-            
-           
-             
-           
-       
-         
-  let printMultipiece f (mp:Messages.MultiPiece.t)= 
-      let rec printPieces f (pieces:Messages.Piece.t list)= match pieces with 
-            | [] ->      BatPrintf.fprintf f "           }\n";
-            | x::xs ->  print_physicalLocationPiece f  x; 
-                        printPieces f xs;
-      in
-      let printMessageText f Messages.Piece.{loc; text = m; _} =
-          BatPrintf.fprintf f "\n        \"message\": {\n            \"text\": \"%s\"\n         }," m ;       
-      in 
-         match mp with
-           | Single (piece: Messages.Piece.t) -> 
-               printMessageText f piece;
-               BatPrintf.fprintf f "\n        \"locations\": [\n        {\n    ";
-               print_physicalLocationPiece f  piece;                              
-               BatPrintf.fprintf f "           }\n";              
-           | Group {group_text = n; pieces = e} ->
-                BatPrintf.fprintf f "\n        \"locations\": [\n        {\n    ";
-                printPieces f e;
-                 BatPrintf.fprintf f "           }\n"
-                           
-
-   let severityToLevel (severity:Messages.Severity.t)= match severity with
-      | Error -> "error"
-      | Warning -> "warning"
-      | Info -> "note"
-      | Debug -> "none"
-      | Success -> "none"
   
-   
- 
-     
-
+  
+  
   
     
-  let printSarifResults f table =         
-          let rec printTags f (tags:Messages.Tags.t)= match tags with 
-           | [] ->BatPrintf.fprintf f "  Unexpected Error,  empty tags in Messages.Tags";
-           | x::xs -> match x with 
-            | CWE cwe->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (string_of_int cwe);
-             (* | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (MessageCategory.show cat ); *)
-            | Category cat ->  BatPrintf.fprintf f "    {\n        \"ruleId\": \"%s\"," (Sarif.Sarif.returnCategory cat ); 
-          in       
-         let printOneResult (message:Messages.Message.t )=             
-             printTags f   message.tags;    
-             (*BatPrintf.fprintf f "    {\n        \"ruleId\": \"%d\","1;*)
-             BatPrintf.fprintf f "\n        \"level\": \"%s\"," (severityToLevel message.severity) ;            
-             printMultipiece f message.multipiece;
-             BatPrintf.fprintf f "       }\n       ]";
-             BatPrintf.fprintf f "\n    }";   
-         in
-         let rec printResults (message_table:Messages.Message.t list)= 
-            match message_table with 
-               [] -> BatPrintf.fprintf f "\n";
-               |x::[] -> printOneResult x;
-               BatPrintf.fprintf f "\n";
-               | x::xs ->printOneResult x;
-                    BatPrintf.fprintf f ",\n";
-                    printResults xs;
-          in  
-          (*BatPrintf.fprintf f "MessageTable length %d"(List.length !Messages.Table.messages_list) ; *)
-          printResults (List.rev !Messages.Table.messages_list)
-  
+    
   let output table gtable gtfxml (file: file) =
     let out = Messages.get_out result_name !GU.out in
     match get_string "result" with
@@ -347,7 +262,7 @@ struct
         fprintf f "   ],\n" ;
         fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
         (*(Lazy.force table) *)
-        fprintf f "   \"results\": [\n%a" printSarifResults (Lazy.force table);
+        fprintf f "   \"results\": [\n%a" Sarif.printSarifResults (Lazy.force table);
         fprintf f "   ]\n" ;
         fprintf f "   }\n  " ;
         fprintf f "]\n" ;       
