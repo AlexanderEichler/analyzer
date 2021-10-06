@@ -161,11 +161,6 @@ struct
     List.iter (one_w f) !Messages.Table.messages_list
    
  
-  
-  
-  
-  
-    
     
   let output table gtable gtfxml (file: file) =
     let out = Messages.get_out result_name !GU.out in
@@ -231,43 +226,11 @@ struct
           | GFun (fd,loc) -> SH.add file2funs loc.file fd.svar.vname
           | _ -> ()
         );      
-      let printSarifHeader f =  
-        (*let print version f (loc,n,fd)::xs= fprintf f "\"version\": \"%s\",\n  " "2.1.0"  in*)
-        fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
-        fprintf f "\"version\": \"%s\",\n  " "2.1.0";
-      in 
+     
       let write_file f fn =
         printf "Writing sarif to temp. file: %s\n%!" fn;
-        printSarifHeader f;
-        fprintf f "\"runs\": [\n  ";
-        fprintf f "{\n  ";
-        fprintf f "\"tool\": {\n    ";
-        fprintf f "\ \"driver\": {\n       ";
-        fprintf f "\"name\": \"%s\",\n       " "goblint";
-        fprintf f "\"fullName\": \"%s\",\n       " "goblint static analyser";   
-        fprintf f "\"informationUri\": \"%s\",\n       " "https://goblint.in.tum.de/home";
-        fprintf f "\"organization\": \"%s\",\n       " "TUM ";
-        fprintf f "\"version\": \"%s\",\n       " Version.goblint; 
-        fprintf f "\"downloadUri\": \"%s\",\n    " "https://github.com/goblint/analyzer";
-        fprintf f "    \"rules\": [\n  ";
-        Sarif.Sarif.printCategorieRules f ["124";"190";"281"];
-        fprintf f "     ]\n  ";
-        fprintf f "   }\n  ";  
-        fprintf f "},\n";
-        fprintf f "\   \"invocations\": [\n       ";
-        fprintf f "{\n";        
-        fprintf f "        \"commandLine\": \"%a\",\n" (BatArray.print ~first:"" ~last:"" ~sep:" " BatString.print) BatSys.argv;
-        fprintf f "        \"executionSuccessful\": %B\n    " true;        
-        fprintf f "   }\n";  
-        fprintf f "   ],\n" ;
-        fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
-        (*(Lazy.force table) *)
-        fprintf f "   \"results\": [\n%a" Sarif.printSarifResults (Lazy.force table);
-        fprintf f "   ]\n" ;
-        fprintf f "   }\n  " ;
-        fprintf f "]\n" ;       
-        fprintf f "}\n";       
-        
+        Sarif.createSarifOutput f;
+      
       in
       let f = BatIO.output_channel out in
       write_file f (get_string "outfile")

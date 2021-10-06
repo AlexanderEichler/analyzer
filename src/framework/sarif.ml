@@ -184,7 +184,7 @@ let print_physicalLocationPiece f Messages.Piece.{loc; text = m; context=con;} =
       | Debug -> "none"
       | Success -> "none"
 
-let printSarifResults f table =         
+let printSarifResults f =         
           let rec printTags f (tags:Messages.Tags.t)= match tags with 
            | [] ->BatPrintf.fprintf f "  Unexpected Error,  empty tags in Messages.Tags";
            | x::xs -> match x with 
@@ -211,3 +211,37 @@ let printSarifResults f table =
           in  
           (*BatPrintf.fprintf f "MessageTable length %d"(List.length !Messages.Table.messages_list) ; *)
           printResults (List.rev !Messages.Table.messages_list)
+
+
+
+let createSarifOutput f =
+        BatPrintf.fprintf f "{\n \"$schema\": \"%s\",\n  " "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json";
+        BatPrintf.fprintf f "\"version\": \"%s\",\n  " "2.1.0";
+        BatPrintf.fprintf f "\"runs\": [\n  ";
+        BatPrintf.fprintf f "{\n  ";
+        BatPrintf.fprintf f "\"tool\": {\n    ";
+        BatPrintf.fprintf f "\ \"driver\": {\n       ";
+        BatPrintf.fprintf f "\"name\": \"%s\",\n       " "goblint";
+        BatPrintf.fprintf f "\"fullName\": \"%s\",\n       " "goblint static analyser";   
+        BatPrintf.fprintf f "\"informationUri\": \"%s\",\n       " "https://goblint.in.tum.de/home";
+        BatPrintf.fprintf f "\"organization\": \"%s\",\n       " "TUM ";
+        BatPrintf.fprintf f "\"version\": \"%s\",\n       " Version.goblint; 
+        BatPrintf.fprintf f "\"downloadUri\": \"%s\",\n    " "https://github.com/goblint/analyzer";
+        BatPrintf.fprintf f "    \"rules\": [\n  ";
+        Sarif.printCategorieRules f ["124";"190";"281"];
+        BatPrintf.fprintf f "     ]\n  ";
+        BatPrintf.fprintf f "   }\n  ";  
+        BatPrintf.fprintf f "},\n";
+        BatPrintf.fprintf f "\   \"invocations\": [\n       ";
+        BatPrintf.fprintf f "{\n";        
+        BatPrintf.fprintf f "        \"commandLine\": \"%a\",\n" (BatArray.print ~first:"" ~last:"" ~sep:" " BatString.print) BatSys.argv;
+        BatPrintf.fprintf f "        \"executionSuccessful\": %B\n    " true;        
+        BatPrintf.fprintf f "   }\n";  
+        BatPrintf.fprintf f "   ],\n" ;
+        BatPrintf.fprintf f "   \"defaultSourceLanguage\": \"%s\",\n" "C";
+        BatPrintf.fprintf f "   \"results\": [\n";
+         printSarifResults f;
+        BatPrintf.fprintf f "   ]\n" ;
+        BatPrintf.fprintf f "   }\n  " ;
+        BatPrintf.fprintf f "]\n" ;       
+        BatPrintf.fprintf f "}\n";
